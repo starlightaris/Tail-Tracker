@@ -1,364 +1,212 @@
-// Layout.js
 import React, { useState, useContext } from 'react';
-import { 
-  PawPrint, LayoutDashboard, UtensilsCrossed, 
-  Heart, User, LogOut, Menu, X, ChevronLeft,
-  Bell, Settings
+import {
+  PawPrint, LayoutDashboard, UtensilsCrossed,
+  Heart, User, LogOut, ChevronLeft, Bell, Menu, X
 } from 'lucide-react';
-import PetSelector from './PetSelector';
 import { PetContext } from '../context/PetContext';
 
+const NAV_ITEMS = [
+  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'diet', icon: UtensilsCrossed, label: 'Diet Manager' },
+  { id: 'health', icon: Heart, label: 'Health Tracker' },
+  { id: 'profile', icon: User, label: 'Pet Profiles' },
+];
+
 const Layout = ({ children, onLogout, currentPage, navigateTo }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { selectedPet } = useContext(PetContext);
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { selectedPet, allPets, setSelectedPet } = useContext(PetContext);
+  const user = JSON.parse(localStorage.getItem('tt_user') || '{}');
 
-  const navItems = [
-    { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { id: 'diet', icon: <UtensilsCrossed size={20} />, label: 'Diet Manager' },
-    { id: 'health', icon: <Heart size={20} />, label: 'Health Tracker' },
-    { id: 'profile', icon: <User size={20} />, label: 'Pet Profile' },
-  ];
-
-  const handleNavigation = (pageId) => {
-    navigateTo(pageId);
-    setMobileMenuOpen(false);
-  };
+  const sideW = collapsed ? 72 : 248;
 
   return (
-    <div style={styles.app}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f6f2' }}>
       {/* Sidebar */}
-      <aside style={{ 
-        ...styles.sidebar, 
-        ...(sidebarOpen ? styles.sidebarOpen : styles.sidebarClosed),
-        ...(mobileMenuOpen ? styles.sidebarMobileOpen : {})
+      <aside style={{
+        width: sideW, flexShrink: 0, background: 'white',
+        borderRight: '1px solid #eae8e2', display: 'flex', flexDirection: 'column',
+        position: 'fixed', height: '100vh', zIndex: 200,
+        transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)',
+        boxShadow: '2px 0 16px rgba(103,99,84,0.06)',
       }}>
-        <div style={styles.sidebarHeader}>
-          <div style={styles.logoArea}>
-            <PawPrint size={28} color="#ca8398" />
-            {sidebarOpen && <span style={styles.logoText}>Tail Tracker</span>}
+        {/* Logo */}
+        <div style={{
+          padding: collapsed ? '18px 14px' : '18px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderBottom: '1px solid #eae8e2', minHeight: 68,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
+            <img
+              src="/logo32.png"
+              alt="Tail Tracker Logo"
+              style={{
+                width: collapsed ? 16 : 32,
+                height: collapsed ? 16 : 32,
+                objectFit: 'contain',
+                flexShrink: 0,
+                /*animation: 'heartbeat 3s ease-in-out infinite',*/
+                borderRadius: 8,
+              }}
+              />
+              {!collapsed && <span style={{
+                fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600,
+                color: '#ca8398', whiteSpace: 'nowrap', animation: 'slideIn 0.25s ease',
+              }}>Tail Tracker</span>}
           </div>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={styles.sidebarToggle}>
-            <ChevronLeft size={20} style={{ transform: sidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} />
+          <button onClick={() => setCollapsed(!collapsed)} style={{
+            background: '#f8f6f2', border: '1px solid #eae8e2', borderRadius: 10,
+            width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: '#9a958c', transition: 'all 0.2s', flexShrink: 0,
+          }}>
+            <ChevronLeft size={16} style={{ transform: collapsed ? 'rotate(180deg)' : '', transition: 'transform 0.3s' }} />
           </button>
         </div>
 
-        <div style={styles.userSection}>
-          <div style={styles.userAvatar}>
-            {user.name?.[0] || 'U'}
+        {/* User */}
+        <div style={{
+          padding: collapsed ? '14px' : '14px 20px',
+          borderBottom: '1px solid #eae8e2', display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 18, background: 'linear-gradient(135deg, #ca8398, #b06d82)',
+            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 800, fontSize: 15, flexShrink: 0, fontFamily: "'Nunito', sans-serif",
+          }}>
+            {(user.name?.[0] || 'U').toUpperCase()}
           </div>
-          {sidebarOpen && (
-            <div style={styles.userInfo}>
-              <div style={styles.userName}>{user.name || 'User'}</div>
-              <div style={styles.userEmail}>{user.email || 'user@example.com'}</div>
+          {!collapsed && (
+            <div style={{ overflow: 'hidden', animation: 'slideIn 0.25s ease' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#3a3728', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name || 'User'}</div>
+              <div style={{ fontSize: 11, color: '#9a958c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email || 'user@example.com'}</div>
             </div>
           )}
         </div>
 
-        <nav style={styles.nav}>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNavigation(item.id)}
-              style={{
-                ...styles.navLink,
-                ...(currentPage === item.id ? styles.navLinkActive : {}),
+        {/* Pet Switcher */}
+        {!collapsed && (
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #eae8e2', animation: 'slideIn 0.25s ease' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#9a958c', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Active Pet</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {allPets.map(pet => (
+                <button key={pet.id} onClick={() => setSelectedPet(pet)} style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                  borderRadius: 12, border: 'none', cursor: 'pointer', transition: 'all 0.18s',
+                  background: selectedPet?.id === pet.id ? '#f7edf0' : 'transparent',
+                  width: '100%', textAlign: 'left',
+                }}>
+                  <img src={pet.img} alt={pet.name} style={{
+                    width: 28, height: 28, borderRadius: 14, objectFit: 'cover',
+                    border: selectedPet?.id === pet.id ? '2px solid #ca8398' : '2px solid transparent',
+                    transition: 'border-color 0.2s',
+                  }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: selectedPet?.id === pet.id ? '#ca8398' : '#676354' }}>{pet.name}</div>
+                    <div style={{ fontSize: 11, color: '#9a958c' }}>{pet.breed}</div>
+                  </div>
+                  {selectedPet?.id === pet.id && <span style={{ marginLeft: 'auto', fontSize: 16 }}>🐾</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: collapsed ? '12px 8px' : '12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {NAV_ITEMS.map(({ id, icon: Icon, label }, idx) => {
+            const active = currentPage === id;
+            return (
+              <button key={id} onClick={() => navigateTo(id)} style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
+                borderRadius: 14, border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                background: active ? 'linear-gradient(135deg, #ca8398, #b06d82)' : 'transparent',
+                color: active ? 'white' : '#9a958c', width: '100%',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                boxShadow: active ? '0 4px 14px rgba(202,131,152,0.3)' : 'none',
+                animation: `slideIn 0.25s ease ${idx * 0.04}s both`,
+                fontFamily: "'Nunito', sans-serif",
               }}
-            >
-              <span style={styles.navIcon}>{item.icon}</span>
-              {sidebarOpen && <span>{item.label}</span>}
-            </button>
-          ))}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#f8f6f2'; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+                title={collapsed ? label : ''}
+              >
+                <Icon size={20} />
+                {!collapsed && <span style={{ fontSize: 14, fontWeight: 600 }}>{label}</span>}
+              </button>
+            );
+          })}
         </nav>
 
-        <div style={styles.sidebarFooter}>
-          <button onClick={onLogout} style={styles.logoutBtn}>
+        {/* Logout */}
+        <div style={{ padding: collapsed ? '12px 8px' : '12px', borderTop: '1px solid #eae8e2' }}>
+          <button onClick={onLogout} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+            borderRadius: 14, border: 'none', cursor: 'pointer',
+            background: 'transparent', color: '#ca8398', width: '100%',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            transition: 'all 0.2s', fontFamily: "'Nunito', sans-serif",
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = '#f7edf0'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
             <LogOut size={20} />
-            {sidebarOpen && <span>Logout</span>}
+            {!collapsed && <span style={{ fontSize: 14, fontWeight: 600 }}>Log Out</span>}
           </button>
         </div>
       </aside>
 
-      {/* Mobile overlay */}
-      {mobileMenuOpen && (
-        <div style={styles.overlay} onClick={() => setMobileMenuOpen(false)} />
-      )}
-
-      {/* Main Content */}
-      <div style={{ 
-        ...styles.main, 
-        ...(sidebarOpen ? styles.mainWithSidebar : styles.mainFull) 
-      }}>
-        {/* Top Bar */}
-        <header style={styles.topBar}>
-          <div style={styles.topBarLeft}>
-            <button 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-              style={styles.mobileMenuBtn}
-            >
-              <Menu size={24} />
-            </button>
-            <div style={styles.pageTitle}>
-              {navItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
-            </div>
+      {/* Main */}
+      <div style={{ marginLeft: sideW, flex: 1, transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        {/* Top bar */}
+        <header style={{
+          background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid #eae8e2', padding: '0 28px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          height: 60, position: 'sticky', top: 0, zIndex: 100,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <h2 style={{
+              margin: 0, fontSize: 18, fontWeight: 800, color: '#3a3728',
+              fontFamily: "'Fraunces', serif",
+            }}>
+              {NAV_ITEMS.find(i => i.id === currentPage)?.label || 'Dashboard'}
+            </h2>
+            {selectedPet && (
+              <span style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px',
+                background: '#f7edf0', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                color: '#ca8398', animation: 'fadeIn 0.3s ease',
+              }}>
+                <img src={selectedPet.img} alt="" style={{ width: 20, height: 20, borderRadius: 10, objectFit: 'cover' }} />
+                {selectedPet.name}
+              </span>
+            )}
           </div>
-          
-          <div style={styles.topBarRight}>
-            <div style={styles.petSelectorWrapper}>
-              <PetSelector />
-            </div>
-            <button style={styles.notificationBtn}>
-              <Bell size={20} />
-              <span style={styles.notificationBadge}>3</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: '#9a958c' }}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </span>
+            <button style={{
+              position: 'relative', background: '#f5f3f0', border: 'none',
+              borderRadius: 12, width: 38, height: 38, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#676354',
+            }}>
+              <Bell size={18} />
+              <span style={{
+                position: 'absolute', top: 6, right: 6, width: 8, height: 8,
+                background: '#ca8398', borderRadius: '50%',
+                animation: 'pulse 2s ease-in-out infinite',
+              }} />
             </button>
           </div>
         </header>
 
-        {/* Page Content */}
-        <main style={styles.content}>
+        <main style={{ flex: 1, padding: '28px 28px', overflowX: 'hidden' }}>
           {children}
         </main>
       </div>
     </div>
   );
 };
-
-const styles = {
-  app: {
-    display: 'flex',
-    minHeight: '100vh',
-    backgroundColor: '#f8f6f4',
-  },
-  sidebar: {
-    backgroundColor: 'white',
-    borderRight: '1px solid #eae8e4',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'width 0.3s ease',
-    position: 'fixed',
-    height: '100vh',
-    zIndex: 100,
-    boxShadow: '2px 0 12px rgba(0,0,0,0.03)',
-  },
-  sidebarOpen: {
-    width: '260px',
-  },
-  sidebarClosed: {
-    width: '72px',
-  },
-  sidebarMobileOpen: {
-    transform: 'translateX(0)',
-  },
-  sidebarHeader: {
-    padding: '20px 16px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottom: '1px solid #eae8e4',
-  },
-  logoArea: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  logoText: {
-    fontSize: '18px',
-    fontWeight: '700',
-    color: '#ca8398',
-  },
-  sidebarToggle: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#9a958c',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  userSection: {
-    padding: '20px 16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    borderBottom: '1px solid #eae8e4',
-  },
-  userAvatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '20px',
-    backgroundColor: '#ca8398',
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '600',
-    fontSize: '16px',
-    flexShrink: 0,
-  },
-  userInfo: {
-    overflow: 'hidden',
-  },
-  userName: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#676354',
-    whiteSpace: 'nowrap',
-  },
-  userEmail: {
-    fontSize: '11px',
-    color: '#9a958c',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
-  nav: {
-    flex: 1,
-    padding: '16px 12px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  navLink: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '10px 12px',
-    borderRadius: '12px',
-    textDecoration: 'none',
-    color: '#676354',
-    transition: 'all 0.2s',
-    fontSize: '14px',
-    fontWeight: '500',
-    width: '100%',
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
-  navLinkActive: {
-    backgroundColor: '#ca8398',
-    color: 'white',
-  },
-  navIcon: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '20px',
-  },
-  sidebarFooter: {
-    padding: '16px',
-    borderTop: '1px solid #eae8e4',
-  },
-  logoutBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '10px 12px',
-    borderRadius: '12px',
-    border: 'none',
-    backgroundColor: 'transparent',
-    color: '#ca8398',
-    cursor: 'pointer',
-    width: '100%',
-    fontSize: '14px',
-    fontWeight: '500',
-    transition: 'background 0.2s',
-    fontFamily: 'inherit',
-  },
-  main: {
-    flex: 1,
-    transition: 'margin-left 0.3s ease',
-    minHeight: '100vh',
-  },
-  mainWithSidebar: {
-    marginLeft: '260px',
-  },
-  mainFull: {
-    marginLeft: '72px',
-  },
-  topBar: {
-    backgroundColor: 'white',
-    borderBottom: '1px solid #eae8e4',
-    padding: '12px 24px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    position: 'sticky',
-    top: 0,
-    zIndex: 99,
-  },
-  topBarLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-  },
-  mobileMenuBtn: {
-    display: 'none',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#676354',
-    '@media (max-width: 768px)': {
-      display: 'flex',
-    },
-  },
-  pageTitle: {
-    fontSize: '20px',
-    fontWeight: '600',
-    color: '#676354',
-  },
-  topBarRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-  },
-  petSelectorWrapper: {
-    minWidth: '180px',
-  },
-  notificationBtn: {
-    position: 'relative',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#676354',
-    padding: '8px',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: '0',
-    right: '0',
-    backgroundColor: '#ca8398',
-    color: 'white',
-    fontSize: '10px',
-    borderRadius: '10px',
-    padding: '2px 6px',
-  },
-  content: {
-    padding: '0',
-  },
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    zIndex: 99,
-  },
-};
-
-// Add responsive styles
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  @media (max-width: 768px) {
-    .sidebar-open {
-      transform: translateX(0);
-    }
-    .sidebar-closed {
-      transform: translateX(-100%);
-    }
-  }
-`;
-document.head.appendChild(styleSheet);
 
 export default Layout;

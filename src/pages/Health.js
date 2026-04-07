@@ -1,1032 +1,337 @@
-// Health.js
 import React, { useContext, useState } from 'react';
 import { PetContext } from '../context/PetContext';
-import { 
-  ShieldCheck, Pill, Bell, CheckCircle, Activity, 
-  Heart, Thermometer, Droplets, Calendar, Plus, 
-  X, AlertTriangle, FileText, Clock, TrendingUp,
-  Syringe, Stethoscope, Weight, Moon, Zap
+import {
+  ShieldCheck, Pill, Bell, CheckCircle, Activity,
+  Heart, FileText, Calendar, Plus, X, AlertTriangle,
+  Syringe, Stethoscope, Thermometer, Droplets, Moon, TrendingUp
 } from 'lucide-react';
+import {
+  Card, CardHeader, PageHeader, PillBtn, Modal,
+  Field, Input, Select, Textarea, useToast, ToastContainer,
+  Badge, EmptyState, MiniBarChart
+} from '../components/ui';
 
 const Health = () => {
-  const { selectedPet, environment } = useContext(PetContext);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newRecord, setNewRecord] = useState({
-    type: 'Vaccination',
-    name: '',
-    date: '',
-    notes: ''
-  });
-  const [selectedFilter, setSelectedFilter] = useState('all');
-  const [localRecords, setLocalRecords] = useState({
-    1: [
-      { id: 101, type: "Vaccination", name: "Rabies", date: "2026-05-20", status: "Upcoming", notes: "Annual rabies vaccination", reminder: true },
-      { id: 102, type: "Medication", name: "Deworming", date: "2026-03-01", status: "Completed", notes: "Broad spectrum dewormer", reminder: false },
-      { id: 103, type: "Checkup", name: "Annual Physical", date: "2026-02-10", status: "Completed", notes: "All vitals normal", reminder: false },
-      { id: 104, type: "Vaccination", name: "Bordetella", date: "2026-06-10", status: "Upcoming", notes: "Kennel cough vaccine", reminder: true }
-    ],
-    2: [
-      { id: 201, type: "Vaccination", name: "Parvovirus", date: "2026-06-15", status: "Upcoming", notes: "First dose", reminder: true },
-      { id: 202, type: "Medication", name: "Flea Treatment", date: "2026-04-01", status: "Completed", notes: "Monthly topical treatment", reminder: false },
-      { id: 203, type: "Checkup", name: "Wellness Visit", date: "2026-03-20", status: "Completed", notes: "Healthy and active", reminder: false }
-    ],
-    3: [
-      { id: 301, type: "Vaccination", name: "DHPP", date: "2026-07-01", status: "Upcoming", notes: "Distemper combo vaccine", reminder: true },
-      { id: 302, type: "Medication", name: "Heartworm Preventive", date: "2026-05-01", status: "Completed", notes: "Monthly chewable", reminder: false }
-    ]
-  });
+  const { selectedPet, environment, healthRecords, addHealthRecord, deleteHealthRecord, toggleReminder } = useContext(PetContext);
+  const { toasts, toast } = useToast();
+  const [showModal, setShowModal] = useState(false);
+  const [filter, setFilter] = useState('all');
+  const [newRecord, setNewRecord] = useState({ type: 'Vaccination', name: '', date: '', notes: '' });
+  const update = (f) => (e) => setNewRecord(prev => ({ ...prev, [f]: e.target.value }));
 
-  const currentRecords = localRecords[selectedPet.id] || [];
-  
-  // Health metrics data (mock)
-  const healthMetrics = {
-    weight: [
-      { month: 'Jan', value: 28 },
-      { month: 'Feb', value: 29 },
-      { month: 'Mar', value: 30 },
-      { month: 'Apr', value: 30 },
-      { month: 'May', value: 31 }
-    ],
-    heartRate: [
-      { week: 'Week 1', value: 82 },
-      { week: 'Week 2', value: 85 },
-      { week: 'Week 3', value: 84 },
-      { week: 'Week 4', value: 87 }
-    ],
-    activity: [
-      { day: 'Mon', value: 47 },
-      { day: 'Tue', value: 52 },
-      { day: 'Wed', value: 49 },
-      { day: 'Thu', value: 58 },
-      { day: 'Fri', value: 65 },
-      { day: 'Sat', value: 71 },
-      { day: 'Sun', value: 63 }
-    ]
-  };
+  if (!selectedPet) return <EmptyState emoji="🩺" message="Select a pet to view health records" />;
 
-  const addRecord = () => {
-    if (!newRecord.name || !newRecord.date) return;
-    const newId = Date.now();
-    const record = {
-      id: newId,
-      type: newRecord.type,
-      name: newRecord.name,
-      date: newRecord.date,
+  const records = healthRecords[selectedPet.id] || [];
+
+  const filtered = filter === 'all' ? records
+    : filter === 'upcoming' ? records.filter(r => r.status === 'Upcoming')
+    : filter === 'completed' ? records.filter(r => r.status === 'Completed')
+    : records.filter(r => r.type.toLowerCase() === filter);
+
+  const handleAdd = () => {
+    if (!newRecord.name || !newRecord.date) { toast('Name and date are required', 'error'); return; }
+    addHealthRecord(selectedPet.id, {
+      ...newRecord,
       status: newRecord.type === 'Vaccination' ? 'Upcoming' : 'Completed',
-      notes: newRecord.notes,
       reminder: true
-    };
-    setLocalRecords(prev => ({
-      ...prev,
-      [selectedPet.id]: [...(prev[selectedPet.id] || []), record]
-    }));
+    });
     setNewRecord({ type: 'Vaccination', name: '', date: '', notes: '' });
-    setShowAddModal(false);
+    setShowModal(false);
+    toast('Health record added 📋');
   };
 
-  const deleteRecord = (id) => {
-    setLocalRecords(prev => ({
-      ...prev,
-      [selectedPet.id]: prev[selectedPet.id].filter(r => r.id !== id)
-    }));
+  const activityData = [
+    { label: 'Mon', value: 47 }, { label: 'Tue', value: 52 },
+    { label: 'Wed', value: 49 }, { label: 'Thu', value: 58 },
+    { label: 'Fri', value: 65 }, { label: 'Sat', value: 71 }, { label: 'Sun', value: 63 }
+  ];
+  const weightData = [
+    { label: 'Jan', value: 28 }, { label: 'Feb', value: 29 },
+    { label: 'Mar', value: 30 }, { label: 'Apr', value: 30 }, { label: 'May', value: 31 }
+  ];
+
+  const exportVetReport = () => {
+    const lines = [
+      `VET REPORT — ${selectedPet.name}`,
+      `Generated: ${new Date().toLocaleDateString()}`,
+      `Breed: ${selectedPet.breed} | Age: ${selectedPet.age}y | Weight: ${selectedPet.weight}`,
+      '',
+      'HEALTH RECORDS:',
+      ...records.map(r => `• [${r.type}] ${r.name} — ${r.date} (${r.status})${r.notes ? '\n  Notes: ' + r.notes : ''}`),
+      '',
+      'VITALS (latest):',
+      `Heart Rate: ${selectedPet.vitals?.heartRate || 85} bpm`,
+      `Respiratory Rate: ${selectedPet.vitals?.respiratoryRate || 24} br/min`,
+      `Weight: ${selectedPet.vitals?.weight || '—'} kg`,
+      '',
+      'MEDICAL INFO:',
+      `Next Vaccination: ${selectedPet.medical?.nextVaccination || '—'}`,
+      `Last Checkup: ${selectedPet.medical?.lastCheckup || '—'}`,
+      `Vaccination Status: ${selectedPet.medical?.vaccinationStatus || '—'}`,
+    ].join('\n');
+    const blob = new Blob([lines], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `${selectedPet.name}_vet_report.txt`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    toast('Vet report exported 🏥');
   };
-
-  const toggleReminder = (id) => {
-    setLocalRecords(prev => ({
-      ...prev,
-      [selectedPet.id]: prev[selectedPet.id].map(r => 
-        r.id === id ? { ...r, reminder: !r.reminder } : r
-      )
-    }));
-  };
-
-  const getFilteredRecords = () => {
-    if (selectedFilter === 'all') return currentRecords;
-    if (selectedFilter === 'upcoming') return currentRecords.filter(r => r.status === 'Upcoming');
-    if (selectedFilter === 'completed') return currentRecords.filter(r => r.status === 'Completed');
-    return currentRecords.filter(r => r.type.toLowerCase() === selectedFilter);
-  };
-
-  const getUpcomingCount = () => currentRecords.filter(r => r.status === 'Upcoming').length;
-  const getCompletedCount = () => currentRecords.filter(r => r.status === 'Completed').length;
-  const getVaccinationCount = () => currentRecords.filter(r => r.type === 'Vaccination').length;
-
-  if (!selectedPet) {
-    return (
-      <div style={styles.emptyState}>
-        <Stethoscope size={64} color="#dadbd5" />
-        <h3>No Pet Selected</h3>
-        <p>Select a pet to view health records</p>
-      </div>
-    );
-  }
 
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', animation: 'fadeIn 0.3s ease' }}>
+      <ToastContainer toasts={toasts} />
+
+      <PageHeader
+        title="Health Tracker"
+        subtitle={`Medical records & vitals for ${selectedPet.name}`}
+        action={
+          <div style={{ display: 'flex', gap: 10 }}>
+            <PillBtn onClick={exportVetReport} variant="outline" icon={<FileText size={16} />}>Vet Report</PillBtn>
+            <PillBtn onClick={() => setShowModal(true)} icon={<Plus size={16} />}>Add Record</PillBtn>
+          </div>
+        }
+      />
+
+      {/* Stats Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+        {[
+          { icon: <Syringe size={20} />, label: 'Total Vaccinations', value: records.filter(r => r.type === 'Vaccination').length, color: '#ca8398' },
+          { icon: <Bell size={20} />, label: 'Upcoming', value: records.filter(r => r.status === 'Upcoming').length, color: '#60a1b0', pulse: records.filter(r => r.status === 'Upcoming').length > 0 },
+          { icon: <CheckCircle size={20} />, label: 'Completed', value: records.filter(r => r.status === 'Completed').length, color: '#676354' },
+          { icon: <Pill size={20} />, label: 'Medications', value: records.filter(r => r.type === 'Medication').length, color: '#ca8398' },
+        ].map(({ icon, label, value, color, pulse }, i) => (
+          <div key={i} style={{
+            background: 'white', borderRadius: 18, padding: '18px 20px',
+            border: '1px solid #eae8e2', animation: `fadeUp 0.4s ease ${i * 0.06}s both`,
+            display: 'flex', alignItems: 'center', gap: 14,
+          }}>
+            <div style={{ width: 44, height: 44, borderRadius: 14, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0, position: 'relative' }}>
+              {icon}
+              {pulse && <span style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, background: color, borderRadius: '50%', animation: 'pulse 2s ease-in-out infinite' }} />}
+            </div>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#3a3728', lineHeight: 1 }}>{value}</div>
+              <div style={{ fontSize: 11, color: '#9a958c', marginTop: 3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+        {/* Records Panel */}
         <div>
-          <h1 style={styles.title}>Health & Medical Tracker</h1>
-          <p style={styles.subtitle}>Manage vaccinations, medications, and health records for {selectedPet.name}</p>
-        </div>
-        <button onClick={() => setShowAddModal(true)} style={styles.addBtn}>
-          <Plus size={18} /> Add Record
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div style={styles.statsGrid}>
-        <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#ca839820', color: '#ca8398' }}>
-            <Syringe size={24} />
-          </div>
-          <div>
-            <div style={styles.statValue}>{getVaccinationCount()}</div>
-            <div style={styles.statLabel}>Total Vaccinations</div>
-          </div>
-        </div>
-        <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#60a1b020', color: '#60a1b0' }}>
-            <Bell size={24} />
-          </div>
-          <div>
-            <div style={styles.statValue}>{getUpcomingCount()}</div>
-            <div style={styles.statLabel}>Upcoming</div>
-          </div>
-        </div>
-        <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#67635420', color: '#676354' }}>
-            <CheckCircle size={24} />
-          </div>
-          <div>
-            <div style={styles.statValue}>{getCompletedCount()}</div>
-            <div style={styles.statLabel}>Completed</div>
-          </div>
-        </div>
-        <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#dadbd520', color: '#ca8398' }}>
-            <Pill size={24} />
-          </div>
-          <div>
-            <div style={styles.statValue}>{currentRecords.filter(r => r.type === 'Medication').length}</div>
-            <div style={styles.statLabel}>Medications</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div style={styles.mainGrid}>
-        {/* Records Table */}
-        <div style={styles.recordsCard}>
-          <div style={styles.cardHeader}>
-            <div style={styles.cardTitle}>
-              <FileText size={20} color="#ca8398" />
-              <h3>Medical Records</h3>
-            </div>
-            <div style={styles.filterTabs}>
-              <button 
-                onClick={() => setSelectedFilter('all')} 
-                style={{ ...styles.filterTab, ...(selectedFilter === 'all' ? styles.filterTabActive : {}) }}
-              >All</button>
-              <button 
-                onClick={() => setSelectedFilter('upcoming')} 
-                style={{ ...styles.filterTab, ...(selectedFilter === 'upcoming' ? styles.filterTabActive : {}) }}
-              >Upcoming</button>
-              <button 
-                onClick={() => setSelectedFilter('completed')} 
-                style={{ ...styles.filterTab, ...(selectedFilter === 'completed' ? styles.filterTabActive : {}) }}
-              >Completed</button>
-              <button 
-                onClick={() => setSelectedFilter('vaccination')} 
-                style={{ ...styles.filterTab, ...(selectedFilter === 'vaccination' ? styles.filterTabActive : {}) }}
-              >Vaccinations</button>
-            </div>
-          </div>
-
-          {getFilteredRecords().length > 0 ? (
-            <div style={styles.tableWrapper}>
-              <table style={styles.table}>
-                <thead>
-                  <tr style={styles.tableHeader}>
-                    <th style={styles.th}>Type</th>
-                    <th style={styles.th}>Treatment</th>
-                    <th style={styles.th}>Date</th>
-                    <th style={styles.th}>Status</th>
-                    <th style={styles.th}>Reminder</th>
-                    <th style={styles.th}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {getFilteredRecords().map((item) => (
-                    <tr key={item.id} style={styles.tableRow}>
-                      <td style={styles.td}>
-                        <span style={styles.typeBadge(item.type)}>
-                          {item.type === 'Vaccination' ? <ShieldCheck size={14} /> : 
-                           item.type === 'Medication' ? <Pill size={14} /> : <Stethoscope size={14} />}
-                          {item.type}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        <div style={styles.treatmentName}>{item.name}</div>
-                        {item.notes && <div style={styles.treatmentNotes}>{item.notes}</div>}
-                      </td>
-                      <td style={styles.td}>
-                        <div style={styles.dateDisplay}>
-                          <Calendar size={12} color="#9a958c" />
-                          {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </div>
-                      </td>
-                      <td style={styles.td}>
-                        <span style={styles.statusBadge(item.status)}>
-                          {item.status === 'Completed' ? <CheckCircle size={12} /> : <Bell size={12} />}
-                          {item.status}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        <button 
-                          onClick={() => toggleReminder(item.id)}
-                          style={{ ...styles.reminderBtn, ...(item.reminder ? styles.reminderOn : {}) }}
-                        >
-                          <Bell size={14} />
-                          {item.reminder ? 'On' : 'Off'}
-                        </button>
-                      </td>
-                      <td style={styles.td}>
-                        <button onClick={() => deleteRecord(item.id)} style={styles.deleteBtn}>
-                          <X size={16} />
-                        </button>
-                      </td>
-                    </tr>
+          <Card style={{ marginBottom: 20, animation: 'fadeUp 0.4s ease 0.1s both' }}>
+            <CardHeader icon={<FileText size={18} />} title="Medical Records" color="#ca8398"
+              right={
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {['all', 'upcoming', 'completed', 'vaccination', 'medication'].map(f => (
+                    <button key={f} onClick={() => setFilter(f)} style={{
+                      padding: '5px 11px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                      background: filter === f ? '#ca8398' : 'transparent', color: filter === f ? 'white' : '#9a958c',
+                      fontSize: 12, fontWeight: 600, transition: 'all 0.18s', fontFamily: "'Nunito', sans-serif",
+                      textTransform: 'capitalize',
+                    }}>{f}</button>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={styles.noRecords}>
-              <p>No medical records found</p>
-              <button onClick={() => setShowAddModal(true)} style={styles.addSmallBtn}>+ Add First Record</button>
-            </div>
-          )}
-        </div>
-
-        {/* Health Metrics Charts */}
-        <div style={styles.metricsCard}>
-          <div style={styles.cardHeader}>
-            <div style={styles.cardTitle}>
-              <Activity size={20} color="#60a1b0" />
-              <h3>Health Metrics</h3>
-            </div>
-          </div>
-          
-          {/* Weight Chart */}
-          <div style={styles.chartSection}>
-            <div style={styles.chartHeader}>
-              <Weight size={16} color="#ca8398" />
-              <span>Weight Trend (kg)</span>
-            </div>
-            <div style={styles.lineChart}>
-              {healthMetrics.weight.map((point, i) => (
-                <div key={i} style={styles.chartPoint}>
-                  <div style={{ ...styles.chartBar, height: `${(point.value / 35) * 100}%`, backgroundColor: '#ca8398' }} />
-                  <div style={styles.chartLabel}>{point.month}</div>
-                  <div style={styles.chartValue}>{point.value}</div>
                 </div>
-              ))}
+              }
+            />
+            <div style={{ padding: filtered.length === 0 ? 0 : '8px 20px 20px' }}>
+              {filtered.length === 0 ? (
+                <EmptyState emoji="📋" message="No records match this filter" sub="Add a record or change the filter" />
+              ) : (
+                filtered.map((item, idx) => (
+                  <RecordRow key={item.id} item={item}
+                    onDelete={() => { deleteHealthRecord(selectedPet.id, item.id); toast('Record removed'); }}
+                    onToggleReminder={() => { toggleReminder(selectedPet.id, item.id); toast(item.reminder ? 'Reminder off' : 'Reminder on 🔔'); }}
+                    animDelay={idx * 0.05}
+                  />
+                ))
+              )}
             </div>
-          </div>
-
-          {/* Heart Rate Chart */}
-          <div style={styles.chartSection}>
-            <div style={styles.chartHeader}>
-              <Heart size={16} color="#ca8398" />
-              <span>Heart Rate (bpm)</span>
-            </div>
-            <div style={styles.lineChart}>
-              {healthMetrics.heartRate.map((point, i) => (
-                <div key={i} style={styles.chartPoint}>
-                  <div style={{ ...styles.chartBar, height: `${(point.value / 100) * 100}%`, backgroundColor: '#ca8398' }} />
-                  <div style={styles.chartLabel}>{point.week}</div>
-                  <div style={styles.chartValue}>{point.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          </Card>
 
           {/* Activity Chart */}
-          <div style={styles.chartSection}>
-            <div style={styles.chartHeader}>
-              <TrendingUp size={16} color="#60a1b0" />
-              <span>Weekly Activity (minutes)</span>
+          <Card style={{ animation: 'fadeUp 0.4s ease 0.2s both' }}>
+            <CardHeader icon={<Activity size={18} />} title="Weekly Activity (min)" color="#60a1b0" />
+            <div style={{ padding: '20px' }}>
+              <MiniBarChart data={activityData} color="#60a1b0" height={100} />
             </div>
-            <div style={styles.activityBars}>
-              {healthMetrics.activity.map((day, i) => (
-                <div key={i} style={styles.activityBar}>
-                  <div style={{ ...styles.barFill, height: `${(day.value / 80) * 100}%`, backgroundColor: '#60a1b0' }} />
-                  <div style={styles.barLabel}>{day.day}</div>
-                  <div style={styles.barValue}>{day.value}</div>
+          </Card>
+        </div>
+
+        {/* Right Panel */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Vitals */}
+          <Card style={{ animation: 'fadeUp 0.4s ease 0.15s both' }}>
+            <CardHeader icon={<Heart size={18} />} title="Live Vitals" color="#ca8398" />
+            <div style={{ padding: '16px 20px' }}>
+              {[
+                { icon: <Heart size={16} />, label: 'Heart Rate', value: selectedPet.vitals?.heartRate || 85, unit: 'bpm', color: '#ca8398' },
+                { icon: <Activity size={16} />, label: 'Resp. Rate', value: selectedPet.vitals?.respiratoryRate || 24, unit: 'br/min', color: '#60a1b0' },
+                { icon: <TrendingUp size={16} />, label: 'Weight', value: selectedPet.vitals?.weight || '—', unit: 'kg', color: '#676354' },
+                { icon: <Moon size={16} />, label: 'Sleep', value: selectedPet.activity?.sleepHours || 7.2, unit: 'hrs', color: '#676354' },
+              ].map(({ icon, label, value, unit, color }, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < 3 ? '1px solid #f8f6f2' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color, display: 'flex' }}>{icon}</span>
+                    <span style={{ fontSize: 13, color: '#9a958c' }}>{label}</span>
+                  </div>
+                  <span style={{ fontSize: 16, fontWeight: 800, color }}>{value}<span style={{ fontSize: 11, fontWeight: 400, color: '#9a958c', marginLeft: 3 }}>{unit}</span></span>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+          </Card>
 
-        {/* Vital Signs & Environment */}
-        <div style={styles.vitalsCard}>
-          <div style={styles.cardHeader}>
-            <div style={styles.cardTitle}>
-              <Heart size={20} color="#ca8398" />
-              <h3>Current Vital Signs</h3>
-            </div>
-          </div>
-          
-          <div style={styles.vitalsGrid}>
-            <div style={styles.vitalItem}>
-              <div style={{ ...styles.vitalIcon, backgroundColor: '#ca839820', color: '#ca8398' }}>
-                <Heart size={20} />
-              </div>
-              <div>
-                <div style={styles.vitalLabel}>Heart Rate</div>
-                <div style={styles.vitalValue}>85 <span style={styles.vitalUnit}>bpm</span></div>
-                <div style={styles.vitalTrend}>↑ 3 from yesterday</div>
-              </div>
-            </div>
-            <div style={styles.vitalItem}>
-              <div style={{ ...styles.vitalIcon, backgroundColor: '#60a1b020', color: '#60a1b0' }}>
-                <Thermometer size={20} />
-              </div>
-              <div>
-                <div style={styles.vitalLabel}>Body Temp</div>
-                <div style={styles.vitalValue}>38.5 <span style={styles.vitalUnit}>°C</span></div>
-                <div style={styles.vitalTrend}>Normal range</div>
-              </div>
-            </div>
-            <div style={styles.vitalItem}>
-              <div style={{ ...styles.vitalIcon, backgroundColor: '#67635420', color: '#676354' }}>
-                <Activity size={20} />
-              </div>
-              <div>
-                <div style={styles.vitalLabel}>Respiratory Rate</div>
-                <div style={styles.vitalValue}>24 <span style={styles.vitalUnit}>breaths/min</span></div>
-                <div style={styles.vitalTrend}>Healthy</div>
-              </div>
-            </div>
-            <div style={styles.vitalItem}>
-              <div style={{ ...styles.vitalIcon, backgroundColor: '#dadbd520', color: '#ca8398' }}>
-                <Weight size={20} />
-              </div>
-              <div>
-                <div style={styles.vitalLabel}>Current Weight</div>
-                <div style={styles.vitalValue}>{selectedPet.weight || "30"} <span style={styles.vitalUnit}>kg</span></div>
-                <div style={styles.vitalTrend}>Ideal range</div>
-              </div>
-            </div>
-          </div>
-
-          <div style={styles.environmentBox}>
-            <div style={styles.environmentHeader}>
-              <Droplets size={16} color="#60a1b0" />
-              <span>Room Environment</span>
-            </div>
-            <div style={styles.environmentGrid}>
-              <div><Thermometer size={14} /> {environment?.temp || 24}°C</div>
-              <div><Droplets size={14} /> {environment?.humidity || 60}% Humidity</div>
-              <div><Zap size={14} /> THI: {environment?.thi || 72}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Upcoming Reminders */}
-        <div style={styles.remindersCard}>
-          <div style={styles.cardHeader}>
-            <div style={styles.cardTitle}>
-              <Bell size={20} color="#ca8398" />
-              <h3>Upcoming Reminders</h3>
-            </div>
-          </div>
-          
-          {currentRecords.filter(r => r.status === 'Upcoming' && r.reminder).length > 0 ? (
-            <div style={styles.remindersList}>
-              {currentRecords.filter(r => r.status === 'Upcoming' && r.reminder).map(reminder => (
-                <div key={reminder.id} style={styles.reminderItem}>
-                  <div style={styles.reminderIcon}>
-                    {reminder.type === 'Vaccination' ? <ShieldCheck size={20} /> : <Pill size={20} />}
-                  </div>
-                  <div style={styles.reminderContent}>
-                    <div style={styles.reminderTitle}>{reminder.name}</div>
-                    <div style={styles.reminderDate}>
-                      <Calendar size={12} />
-                      {new Date(reminder.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          {/* Upcoming Reminders */}
+          <Card style={{ animation: 'fadeUp 0.4s ease 0.2s both' }}>
+            <CardHeader icon={<Bell size={18} />} title="Upcoming Reminders" color="#60a1b0" />
+            <div style={{ padding: '8px 20px 16px' }}>
+              {records.filter(r => r.reminder && r.status === 'Upcoming').length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#9a958c', fontSize: 13 }}>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>✅</div>
+                  No upcoming reminders
+                </div>
+              ) : (
+                records.filter(r => r.reminder && r.status === 'Upcoming').map((r, i) => (
+                  <div key={r.id} style={{
+                    display: 'flex', gap: 12, padding: '12px 0',
+                    borderBottom: '1px solid #f0eeea', animation: `slideIn 0.25s ease ${i * 0.06}s both`,
+                  }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 18, background: '#f7edf0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ca8398', flexShrink: 0 }}>
+                      {r.type === 'Vaccination' ? <ShieldCheck size={16} /> : r.type === 'Medication' ? <Pill size={16} /> : <Stethoscope size={16} />}
                     </div>
-                    {reminder.notes && <div style={styles.reminderNotes}>{reminder.notes}</div>}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#3a3728' }}>{r.name}</div>
+                      <div style={{ fontSize: 12, color: '#9a958c', marginTop: 2 }}>
+                        {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    </div>
+                    <DaysChip date={r.date} />
                   </div>
-                  <div style={styles.reminderDays}>
-                    {Math.ceil((new Date(reminder.date) - new Date()) / (1000 * 60 * 60 * 24))} days
-                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+
+          {/* Weight trend */}
+          <Card style={{ animation: 'fadeUp 0.4s ease 0.25s both' }}>
+            <CardHeader icon={<TrendingUp size={18} />} title="Weight Trend (kg)" color="#676354" />
+            <div style={{ padding: '20px' }}>
+              <MiniBarChart data={weightData} color="#ca8398" height={90} />
+            </div>
+          </Card>
+
+          {/* Environment */}
+          <Card style={{ animation: 'fadeUp 0.4s ease 0.3s both' }}>
+            <CardHeader icon={<Thermometer size={18} />} title="Environment" color="#60a1b0" />
+            <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {[
+                { emoji: '🌡️', label: 'Temp', value: `${(environment?.temp || 24).toFixed(1)}°C` },
+                { emoji: '💧', label: 'Humidity', value: `${(environment?.humidity || 60).toFixed(0)}%` },
+                { emoji: '🌬️', label: 'Air Quality', value: environment?.airQuality || 'Good' },
+                { emoji: '🌿', label: 'THI', value: (environment?.thi || 72.5).toFixed(1) },
+              ].map(({ emoji, label, value }, i) => (
+                <div key={i} style={{ padding: '10px', background: '#f5f4f0', borderRadius: 12, textAlign: 'center' }}>
+                  <div style={{ fontSize: 18, marginBottom: 2 }}>{emoji}</div>
+                  <div style={{ fontSize: 10, color: '#9a958c', fontWeight: 600 }}>{label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#3a3728' }}>{value}</div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div style={styles.noReminders}>
-              <CheckCircle size={32} color="#60a1b0" />
-              <p>All caught up! No upcoming reminders.</p>
-            </div>
-          )}
+          </Card>
         </div>
       </div>
 
       {/* Add Record Modal */}
-      {showAddModal && (
-        <div style={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalHeader}>
-              <h3 style={styles.modalTitle}>Add Medical Record</h3>
-              <button onClick={() => setShowAddModal(false)} style={styles.modalClose}>
-                <X size={20} />
-              </button>
-            </div>
-            <div style={styles.modalBody}>
-              <div style={styles.modalField}>
-                <label>Record Type</label>
-                <select 
-                  value={newRecord.type} 
-                  onChange={(e) => setNewRecord({ ...newRecord, type: e.target.value })}
-                  style={styles.modalSelect}
-                >
-                  <option value="Vaccination">Vaccination</option>
-                  <option value="Medication">Medication</option>
-                  <option value="Checkup">Checkup</option>
-                </select>
-              </div>
-              <div style={styles.modalField}>
-                <label>Treatment Name</label>
-                <input 
-                  type="text" 
-                  value={newRecord.name} 
-                  onChange={(e) => setNewRecord({ ...newRecord, name: e.target.value })}
-                  placeholder="e.g., Rabies Vaccine"
-                  style={styles.modalInput}
-                />
-              </div>
-              <div style={styles.modalField}>
-                <label>Date</label>
-                <input 
-                  type="date" 
-                  value={newRecord.date} 
-                  onChange={(e) => setNewRecord({ ...newRecord, date: e.target.value })}
-                  style={styles.modalInput}
-                />
-              </div>
-              <div style={styles.modalField}>
-                <label>Notes (optional)</label>
-                <textarea 
-                  value={newRecord.notes} 
-                  onChange={(e) => setNewRecord({ ...newRecord, notes: e.target.value })}
-                  placeholder="Additional details..."
-                  style={styles.modalTextarea}
-                  rows="3"
-                />
-              </div>
-            </div>
-            <div style={styles.modalFooter}>
-              <button onClick={() => setShowAddModal(false)} style={styles.modalCancelBtn}>Cancel</button>
-              <button onClick={addRecord} style={styles.modalSaveBtn}>Save Record</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal open={showModal} onClose={() => setShowModal(false)} title="➕ Add Health Record"
+        footer={<>
+          <PillBtn variant="ghost" onClick={() => setShowModal(false)}>Cancel</PillBtn>
+          <PillBtn onClick={handleAdd}>Save Record</PillBtn>
+        </>}
+      >
+        <Field label="Record Type">
+          <Select value={newRecord.type} onChange={update('type')}>
+            <option>Vaccination</option>
+            <option>Medication</option>
+            <option>Checkup</option>
+          </Select>
+        </Field>
+        <Field label="Name / Treatment">
+          <Input value={newRecord.name} onChange={update('name')} placeholder="e.g. Rabies Vaccine" />
+        </Field>
+        <Field label="Date">
+          <Input type="date" value={newRecord.date} onChange={update('date')} />
+        </Field>
+        <Field label="Notes (optional)">
+          <textarea value={newRecord.notes} onChange={update('notes')} placeholder="Any additional notes…"
+            style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #e8e5df', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: "'Nunito', sans-serif", minHeight: 80 }}
+            onFocus={e => e.target.style.borderColor = '#ca8398'} onBlur={e => e.target.style.borderColor = '#e8e5df'}
+          />
+        </Field>
+      </Modal>
     </div>
   );
 };
 
-const styles = {
-  container: {
-    padding: '28px 32px',
-    maxWidth: '1400px',
-    margin: '0 auto',
-    minHeight: '100%',
-  },
-  emptyState: {
-    textAlign: 'center',
-    padding: '80px 20px',
-    color: '#9a958c',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '28px',
-    flexWrap: 'wrap',
-    gap: '16px',
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: '#676354',
-    margin: 0,
-    letterSpacing: '-0.3px',
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#9a958c',
-    margin: '6px 0 0 0',
-  },
-  addBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 20px',
-    backgroundColor: '#ca8398',
-    border: 'none',
-    borderRadius: '40px',
-    color: 'white',
-    fontWeight: '500',
-    cursor: 'pointer',
-    fontSize: '14px',
-  },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-    marginBottom: '28px',
-  },
-  statCard: {
-    backgroundColor: 'white',
-    borderRadius: '20px',
-    padding: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    border: '1px solid #eae8e4',
-  },
-  statIcon: {
-    width: '52px',
-    height: '52px',
-    borderRadius: '26px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statValue: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: '#676354',
-  },
-  statLabel: {
-    fontSize: '13px',
-    color: '#9a958c',
-  },
-  mainGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '24px',
-  },
-  recordsCard: {
-    gridColumn: 'span 2',
-    backgroundColor: 'white',
-    borderRadius: '20px',
-    border: '1px solid #eae8e4',
-    overflow: 'hidden',
-  },
-  metricsCard: {
-    backgroundColor: 'white',
-    borderRadius: '20px',
-    border: '1px solid #eae8e4',
-    overflow: 'hidden',
-  },
-  vitalsCard: {
-    backgroundColor: 'white',
-    borderRadius: '20px',
-    border: '1px solid #eae8e4',
-    overflow: 'hidden',
-  },
-  remindersCard: {
-    backgroundColor: 'white',
-    borderRadius: '20px',
-    border: '1px solid #eae8e4',
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    padding: '18px 20px',
-    borderBottom: '1px solid #eae8e4',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '12px',
-  },
-  cardTitle: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    '& h3': {
-      margin: 0,
-      fontSize: '16px',
-      fontWeight: '600',
-      color: '#676354',
-    },
-  },
-  filterTabs: {
-    display: 'flex',
-    gap: '8px',
-  },
-  filterTab: {
-    padding: '6px 14px',
-    borderRadius: '20px',
-    border: 'none',
-    backgroundColor: '#f5f3f0',
-    color: '#676354',
-    fontSize: '13px',
-    cursor: 'pointer',
-  },
-  filterTabActive: {
-    backgroundColor: '#ca8398',
-    color: 'white',
-  },
-  tableWrapper: {
-    overflowX: 'auto',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
-  tableHeader: {
-    borderBottom: '1px solid #eae8e4',
-    backgroundColor: '#faf9f7',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '14px 16px',
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#676354',
-  },
-  tableRow: {
-    borderBottom: '1px solid #f0eeea',
-    '&:hover': {
-      backgroundColor: '#faf9f7',
-    },
-  },
-  td: {
-    padding: '14px 16px',
-    fontSize: '14px',
-    verticalAlign: 'middle',
-  },
-  typeBadge: (type) => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '4px 10px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: '500',
-    backgroundColor: type === 'Vaccination' ? '#ca839820' : type === 'Medication' ? '#60a1b020' : '#67635420',
-    color: type === 'Vaccination' ? '#ca8398' : type === 'Medication' ? '#60a1b0' : '#676354',
-  }),
-  treatmentName: {
-    fontWeight: '500',
-    color: '#676354',
-  },
-  treatmentNotes: {
-    fontSize: '11px',
-    color: '#9a958c',
-    marginTop: '2px',
-  },
-  dateDisplay: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    color: '#676354',
-  },
-  statusBadge: (status) => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '5px',
-    padding: '4px 10px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    backgroundColor: status === 'Upcoming' ? '#fff3cd' : '#d4edda',
-    color: status === 'Upcoming' ? '#856404' : '#155724',
-  }),
-  reminderBtn: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '4px 10px',
-    borderRadius: '20px',
-    border: '1px solid #dadbd5',
-    backgroundColor: 'white',
-    color: '#9a958c',
-    fontSize: '11px',
-    cursor: 'pointer',
-  },
-  reminderOn: {
-    backgroundColor: '#60a1b0',
-    borderColor: '#60a1b0',
-    color: 'white',
-  },
-  deleteBtn: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#ca8398',
-    padding: '4px',
-  },
-  noRecords: {
-    textAlign: 'center',
-    padding: '40px',
-    color: '#9a958c',
-  },
-  addSmallBtn: {
-    marginTop: '12px',
-    padding: '8px 16px',
-    backgroundColor: '#ca8398',
-    border: 'none',
-    borderRadius: '20px',
-    color: 'white',
-    cursor: 'pointer',
-  },
-  chartSection: {
-    padding: '16px 20px',
-    borderBottom: '1px solid #eae8e4',
-  },
-  chartHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    fontSize: '13px',
-    fontWeight: '500',
-    color: '#676354',
-    marginBottom: '16px',
-  },
-  lineChart: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    gap: '12px',
-    height: '120px',
-  },
-  chartPoint: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  chartBar: {
-    width: '100%',
-    maxWidth: '40px',
-    minHeight: '4px',
-    borderRadius: '4px',
-    transition: 'height 0.3s',
-  },
-  chartLabel: {
-    fontSize: '10px',
-    color: '#9a958c',
-  },
-  chartValue: {
-    fontSize: '11px',
-    fontWeight: '500',
-    color: '#676354',
-  },
-  activityBars: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    gap: '8px',
-    height: '140px',
-  },
-  activityBar: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '6px',
-    height: '100%',
-  },
-  barFill: {
-    width: '100%',
-    maxWidth: '35px',
-    borderRadius: '4px',
-    transition: 'height 0.3s',
-  },
-  barLabel: {
-    fontSize: '10px',
-    color: '#9a958c',
-  },
-  barValue: {
-    fontSize: '10px',
-    fontWeight: '500',
-    color: '#676354',
-  },
-  vitalsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '16px',
-    padding: '20px',
-  },
-  vitalItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  vitalIcon: {
-    width: '44px',
-    height: '44px',
-    borderRadius: '22px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  vitalLabel: {
-    fontSize: '12px',
-    color: '#9a958c',
-  },
-  vitalValue: {
-    fontSize: '20px',
-    fontWeight: '700',
-    color: '#676354',
-  },
-  vitalUnit: {
-    fontSize: '12px',
-    fontWeight: '400',
-    color: '#9a958c',
-  },
-  vitalTrend: {
-    fontSize: '10px',
-    color: '#60a1b0',
-  },
-  environmentBox: {
-    margin: '0 20px 20px 20px',
-    padding: '16px',
-    backgroundColor: '#eef4f5',
-    borderRadius: '16px',
-  },
-  environmentHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    fontSize: '13px',
-    fontWeight: '500',
-    color: '#60a1b0',
-    marginBottom: '12px',
-  },
-  environmentGrid: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '13px',
-    color: '#676354',
-  },
-  remindersList: {
-    padding: '20px',
-  },
-  reminderItem: {
-    display: 'flex',
-    gap: '14px',
-    padding: '14px 0',
-    borderBottom: '1px solid #f0eeea',
-  },
-  reminderIcon: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '20px',
-    backgroundColor: '#ca839820',
-    color: '#ca8398',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  reminderContent: {
-    flex: 1,
-  },
-  reminderTitle: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: '#676354',
-    marginBottom: '4px',
-  },
-  reminderDate: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    fontSize: '12px',
-    color: '#9a958c',
-    marginBottom: '4px',
-  },
-  reminderNotes: {
-    fontSize: '12px',
-    color: '#60a1b0',
-  },
-  reminderDays: {
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#ca8398',
-    alignSelf: 'center',
-  },
-  noReminders: {
-    textAlign: 'center',
-    padding: '40px',
-    color: '#9a958c',
-  },
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  },
-  modal: {
-    backgroundColor: 'white',
-    borderRadius: '24px',
-    width: '90%',
-    maxWidth: '500px',
-    maxHeight: '90vh',
-    overflow: 'auto',
-  },
-  modalHeader: {
-    padding: '20px 24px',
-    borderBottom: '1px solid #eae8e4',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: '20px',
-    fontWeight: '600',
-    color: '#676354',
-    margin: 0,
-  },
-  modalClose: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#9a958c',
-  },
-  modalBody: {
-    padding: '24px',
-  },
-  modalField: {
-    marginBottom: '16px',
-    '& label': {
-      display: 'block',
-      fontSize: '13px',
-      fontWeight: '500',
-      color: '#676354',
-      marginBottom: '6px',
-    },
-  },
-  modalInput: {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: '12px',
-    border: '1px solid #dadbd5',
-    fontSize: '14px',
-    outline: 'none',
-  },
-  modalSelect: {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: '12px',
-    border: '1px solid #dadbd5',
-    fontSize: '14px',
-    outline: 'none',
-    backgroundColor: 'white',
-  },
-  modalTextarea: {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: '12px',
-    border: '1px solid #dadbd5',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    outline: 'none',
-    resize: 'vertical',
-  },
-  modalFooter: {
-    padding: '16px 24px',
-    borderTop: '1px solid #eae8e4',
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '12px',
-  },
-  modalCancelBtn: {
-    padding: '10px 20px',
-    borderRadius: '40px',
-    border: '1px solid #dadbd5',
-    backgroundColor: 'white',
-    color: '#676354',
-    cursor: 'pointer',
-  },
-  modalSaveBtn: {
-    padding: '10px 20px',
-    borderRadius: '40px',
-    border: 'none',
-    backgroundColor: '#ca8398',
-    color: 'white',
-    cursor: 'pointer',
-  },
+const RecordRow = ({ item, onDelete, onToggleReminder, animDelay }) => {
+  const typeConfig = {
+    Vaccination: { icon: <ShieldCheck size={15} />, color: '#ca8398', bg: '#f7edf0' },
+    Medication:  { icon: <Pill size={15} />,        color: '#60a1b0', bg: '#e4f2f5' },
+    Checkup:     { icon: <Stethoscope size={15} />, color: '#676354', bg: '#eae8e2' },
+  };
+  const { icon, color, bg } = typeConfig[item.type] || typeConfig.Checkup;
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 14,
+      padding: '12px 14px', borderRadius: 14, marginBottom: 6,
+      border: '1px solid #f0eeea', background: '#fdfcfb',
+      animation: `slideIn 0.25s ease ${animDelay}s both`, transition: 'background 0.2s',
+    }}
+      onMouseEnter={e => e.currentTarget.style.background = '#faf9f7'}
+      onMouseLeave={e => e.currentTarget.style.background = '#fdfcfb'}
+    >
+      <div style={{ width: 36, height: 36, borderRadius: 18, background: bg, color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#3a3728', marginBottom: 2 }}>{item.name}</div>
+        <div style={{ fontSize: 12, color: '#9a958c' }}>{item.notes}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <span style={{ fontSize: 12, color: '#9a958c' }}>
+          {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </span>
+        <span style={{
+          padding: '3px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+          background: item.status === 'Completed' ? '#e4f2f5' : '#f7edf0',
+          color: item.status === 'Completed' ? '#60a1b0' : '#ca8398',
+        }}>
+          {item.status === 'Completed' ? '✓ Done' : '⏰ Soon'}
+        </span>
+        <button onClick={onToggleReminder} style={{
+          background: item.reminder ? '#f7edf0' : 'transparent',
+          border: '1px solid', borderColor: item.reminder ? '#ca8398' : '#eae8e2',
+          borderRadius: 20, padding: '3px 8px', cursor: 'pointer', fontSize: 11,
+          color: item.reminder ? '#ca8398' : '#9a958c', fontWeight: 600, transition: 'all 0.2s', fontFamily: "'Nunito', sans-serif",
+        }}>🔔</button>
+        <button onClick={onDelete} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dadbd5', padding: 3, display: 'flex', transition: 'color 0.2s' }}
+          onMouseEnter={e => e.currentTarget.style.color = '#ca8398'} onMouseLeave={e => e.currentTarget.style.color = '#dadbd5'}>
+          <X size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const DaysChip = ({ date }) => {
+  const days = Math.ceil((new Date(date) - new Date()) / 86400000);
+  if (days < 0) return <span style={{ fontSize: 11, fontWeight: 700, color: '#60a1b0' }}>Done</span>;
+  return (
+    <span style={{
+      fontSize: 12, fontWeight: 800, color: days <= 7 ? '#ca8398' : '#676354',
+      background: days <= 7 ? '#f7edf0' : '#f5f4f0', padding: '3px 8px', borderRadius: 20, whiteSpace: 'nowrap',
+    }}>
+      {days}d
+    </span>
+  );
 };
 
 export default Health;

@@ -1,299 +1,251 @@
 import React, { useContext } from 'react';
 import { PetContext } from '../context/PetContext';
-import { 
-  Thermometer, Droplets, Activity, Heart, 
-  Syringe, UtensilsCrossed, MapPin, Moon,
-  TrendingUp, Droplet, Wind, Coffee
+import {
+  Thermometer, Droplets, Activity, Heart, Syringe,
+  UtensilsCrossed, MapPin, Moon, TrendingUp, Droplet,
+  Wind, Coffee, Zap
 } from 'lucide-react';
+import { StatChip, Card, CardHeader, MiniBarChart } from '../components/ui';
 
 const Dashboard = () => {
-  const { selectedPet } = useContext(PetContext);
+  const { selectedPet, environment } = useContext(PetContext);
+  if (!selectedPet) return null;
 
-  // Comprehensive mock IoT and health data linked to the prototype
-  const healthData = {
-    // Environmental
-    temp: "24°C",
-    humidity: "60%",
-    airQuality: "Good",
-    
-    // Diet & Feeder
-    foodDispensed: "200g",
-    waterConsumed: "150ml",
-    lastFeeding: "08:30 AM",
-    weight: "4.2 kg",
-    weightChange: "-0.1 kg",
-    
-    // Vital Signs
-    heartRate: "85 bpm",
-    respiratoryRate: "24 breaths/min",
-    
-    // Medical
-    nextVaccination: "May 15, 2026",
-    lastCheckup: "Mar 10, 2026",
-    
-    // Activity & Sleep
-    activeMinutes: "47 min",
-    steps: "2,843",
-    sleepHours: "7.2 hrs",
-    
-    // GPS
-    lastLocation: "Central Park",
-    distanceTraveled: "1.2 km"
-  };
+  const p = selectedPet;
+  const activityData = [
+    { label: 'Mon', value: 47 }, { label: 'Tue', value: 52 },
+    { label: 'Wed', value: 49 }, { label: 'Thu', value: 58 },
+    { label: 'Fri', value: 65 }, { label: 'Sat', value: 71 },
+    { label: 'Sun', value: 63 }
+  ];
 
   return (
-    <div style={styles.container}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', animation: 'fadeIn 0.35s ease' }}>
       {/* Welcome Banner */}
-      <div style={styles.welcomeBanner}>
-        <div>
-          <h1 style={styles.welcomeTitle}>Hello, {selectedPet.name}! 🐾</h1>
-          <p style={styles.welcomeSubtitle}>Here's your daily health & activity overview</p>
+      <div style={{
+        background: 'linear-gradient(135deg, #ca8398 0%, #a5637a 60%, #60a1b0 100%)',
+        borderRadius: 24, padding: '24px 30px', marginBottom: 28,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        boxShadow: '0 8px 28px rgba(202,131,152,0.3)', position: 'relative', overflow: 'hidden',
+        animation: 'fadeUp 0.4s ease',
+      }}>
+        {/* Decorative circles */}
+        <div style={{ position: 'absolute', right: 80, top: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
+        <div style={{ position: 'absolute', right: 20, top: 10, width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18, zIndex: 1 }}>
+          <img src={p.img} alt={p.name} style={{
+            width: 64, height: 64, borderRadius: 32, objectFit: 'cover',
+            border: '3px solid rgba(255,255,255,0.6)',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+            animation: 'float 4s ease-in-out infinite',
+          }} />
+          <div>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: 'white', fontFamily: "'Fraunces', serif" }}>
+              Hey, {p.name}! 🐾
+            </h1>
+            <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
+              {p.breed} · {p.age} years old · Here's your daily overview
+            </p>
+          </div>
         </div>
-        <div style={styles.dateBadge}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+
+        <div style={{ zIndex: 1, textAlign: 'right' }}>
+          <div style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)', borderRadius: 40, padding: '8px 16px', color: 'white', fontSize: 13, fontWeight: 600 }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </div>
+          <div style={{ marginTop: 8, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '4px 10px', color: 'white', fontSize: 11, fontWeight: 600 }}>
+              🌡️ {environment?.temp?.toFixed(1) || 24}°C
+            </span>
+            <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '4px 10px', color: 'white', fontSize: 11, fontWeight: 600 }}>
+              💧 {environment?.humidity?.toFixed(0) || 60}%
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div style={styles.grid}>
-        {/* Environmental Section */}
-        <Section title="Environment" icon={<Thermometer size={18} />}>
-          <StatCard icon={<Thermometer />} label="Ambient Temp" value={healthData.temp} color="#ca8398" />
-          <StatCard icon={<Droplets />} label="Humidity" value={healthData.humidity} color="#60a1b0" />
-          <StatCard icon={<Wind />} label="Air Quality" value={healthData.airQuality} color="#676354" />
-        </Section>
-
-        {/* Diet & Nutrition Section */}
-        <Section title="Diet & Nutrition" icon={<UtensilsCrossed size={18} />}>
-          <StatCard icon={<Coffee />} label="Food Dispensed" value={healthData.foodDispensed} color="#ca8398" />
-          <StatCard icon={<Droplet />} label="Water Consumed" value={healthData.waterConsumed} color="#60a1b0" />
-          <StatCard icon={<Activity />} label="Weight" value={healthData.weight} trend={healthData.weightChange} color="#676354" />
-          <StatCard icon={<ClockIcon />} label="Last Feeding" value={healthData.lastFeeding} color="#dadbd5" />
-        </Section>
-
-        {/* Vital Signs Section */}
-        <Section title="Vital Signs" icon={<Heart size={18} />}>
-          <StatCard icon={<Heart />} label="Heart Rate" value={healthData.heartRate} color="#ca8398" />
-          <StatCard icon={<Activity />} label="Respiratory Rate" value={healthData.respiratoryRate} color="#60a1b0" />
-        </Section>
-
-        {/* Medical Section */}
-        <Section title="Medical Tracking" icon={<Syringe size={18} />}>
-          <StatCard icon={<Syringe />} label="Next Vaccination" value={healthData.nextVaccination} color="#ca8398" />
-          <StatCard icon={<Activity />} label="Last Checkup" value={healthData.lastCheckup} color="#676354" />
-        </Section>
-
-        {/* Activity & Sleep Section */}
-        <Section title="Activity & Sleep" icon={<TrendingUp size={18} />}>
-          <StatCard icon={<Activity />} label="Active Minutes" value={healthData.activeMinutes} color="#60a1b0" />
-          <StatCard icon={<TrendingUp />} label="Steps" value={healthData.steps} color="#ca8398" />
-          <StatCard icon={<Moon />} label="Sleep" value={healthData.sleepHours} color="#676354" />
-        </Section>
-
-        {/* GPS Tracking Section */}
-        <Section title="GPS Tracking" icon={<MapPin size={18} />}>
-          <StatCard icon={<MapPin />} label="Last Location" value={healthData.lastLocation} color="#60a1b0" />
-          <StatCard icon={<Activity />} label="Distance Today" value={healthData.distanceTraveled} color="#ca8398" />
-        </Section>
+      {/* Quick Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 28 }}>
+        <StatChip icon={<Heart size={20} />} label="Heart Rate" value={`${p.vitals?.heartRate || 85} bpm`} color="#ca8398" animDelay={0.05} />
+        <StatChip icon={<Activity size={20} />} label="Steps Today" value={p.activity?.steps?.toLocaleString() || '2,843'} color="#60a1b0" animDelay={0.1} />
+        <StatChip icon={<Moon size={20} />} label="Sleep" value={`${p.activity?.sleepHours || 7.2} hrs`} color="#676354" animDelay={0.15} />
+        <StatChip icon={<TrendingUp size={20} />} label="Active Minutes" value={`${p.activity?.activeMinutes || 47} min`} color="#ca8398" animDelay={0.2} />
+        <StatChip icon={<Droplet size={20} />} label="Water" value="150 ml" color="#60a1b0" animDelay={0.25} />
+        <StatChip icon={<MapPin size={20} />} label="Distance" value={p.gps?.distanceTraveled || '1.2 km'} color="#676354" animDelay={0.3} />
       </div>
 
-      {/* Health Insight Card */}
-      <div style={styles.insightCard}>
-        <div style={styles.insightIcon}>💡</div>
-        <div>
-          <h3 style={styles.insightTitle}>AI Health Insight</h3>
-          <p style={styles.insightText}>
-            {selectedPet.name} has been more active than usual today! +15% steps compared to yesterday. 
-            Water consumption is optimal. Next vaccination due in 2 weeks.
-          </p>
-        </div>
+      {/* Main Content Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginBottom: 20 }}>
+        {/* Vital Signs */}
+        <Card style={{ animation: 'fadeUp 0.4s ease 0.1s both' }}>
+          <CardHeader icon={<Heart size={18} />} title="Vital Signs" color="#ca8398" />
+          <div style={{ padding: 20 }}>
+            <VitalRow icon={<Heart size={16} color="#ca8398" />} label="Heart Rate" value={`${p.vitals?.heartRate || 85}`} unit="bpm" color="#ca8398" />
+            <VitalRow icon={<Activity size={16} color="#60a1b0" />} label="Resp. Rate" value={`${p.vitals?.respiratoryRate || 24}`} unit="br/min" color="#60a1b0" />
+            <VitalRow icon={<TrendingUp size={16} color="#676354" />} label="Weight" value={`${p.vitals?.weight || 30.2}`} unit="kg" color="#676354" trend={p.vitals?.weightChange} />
+            <div style={{ marginTop: 14, padding: '12px 14px', background: 'linear-gradient(135deg, #f7edf0, #fce9ef)', borderRadius: 14 }}>
+              <div style={{ fontSize: 12, color: '#ca8398', fontWeight: 700, marginBottom: 4 }}>💡 Health Status</div>
+              <div style={{ fontSize: 13, color: '#676354' }}>All vitals within healthy range 🐶</div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Activity */}
+        <Card style={{ animation: 'fadeUp 0.4s ease 0.15s both' }}>
+          <CardHeader icon={<Activity size={18} />} title="Weekly Activity" color="#60a1b0" />
+          <div style={{ padding: 20 }}>
+            <MiniBarChart data={activityData} color="#60a1b0" height={100} />
+            <div style={{ marginTop: 14, display: 'flex', gap: 10 }}>
+              <div style={{ flex: 1, padding: '10px', background: '#e4f2f5', borderRadius: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#60a1b0' }}>{p.activity?.activeMinutes || 47}</div>
+                <div style={{ fontSize: 11, color: '#3d7f8f', marginTop: 2, fontWeight: 600 }}>avg min/day</div>
+              </div>
+              <div style={{ flex: 1, padding: '10px', background: '#f7edf0', borderRadius: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#ca8398' }}>{p.activity?.sleepHours || 7.2}</div>
+                <div style={{ fontSize: 11, color: '#a5637a', marginTop: 2, fontWeight: 600 }}>hrs sleep</div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* GPS + Environment */}
+        <Card style={{ animation: 'fadeUp 0.4s ease 0.2s both' }}>
+          <CardHeader icon={<MapPin size={18} />} title="GPS & Location" color="#676354" />
+          <div style={{ padding: 20 }}>
+            <div style={{ background: 'linear-gradient(135deg, #eae8e2, #f5f4f0)', borderRadius: 16, padding: '16px', marginBottom: 14, textAlign: 'center' }}>
+              <div style={{ fontSize: 28, marginBottom: 4 }}>📍</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#3a3728' }}>{p.gps?.lastLocation || 'Central Park'}</div>
+              <div style={{ fontSize: 12, color: '#9a958c', marginTop: 4 }}>Last known location</div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0eeea' }}>
+              <span style={{ fontSize: 13, color: '#9a958c' }}>Distance today</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#676354' }}>{p.gps?.distanceTraveled || '1.2 km'}</span>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#9a958c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Environment</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <EnvChip icon="🌡️" label="Temp" value={`${environment?.temp?.toFixed(1) || 24}°C`} />
+                <EnvChip icon="💧" label="Humidity" value={`${environment?.humidity?.toFixed(0) || 60}%`} />
+                <EnvChip icon="🌬️" label="Air Quality" value={environment?.airQuality || 'Good'} />
+                <EnvChip icon="🌿" label="THI Index" value={(environment?.thi || 72.5).toFixed(1)} />
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Diet + Medical row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        {/* Diet */}
+        <Card style={{ animation: 'fadeUp 0.4s ease 0.25s both' }}>
+          <CardHeader icon={<UtensilsCrossed size={18} />} title="Diet & Feeding" color="#ca8398" />
+          <div style={{ padding: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
+              <MiniStat label="Food Today" value="200g" color="#ca8398" />
+              <MiniStat label="Water" value="150ml" color="#60a1b0" />
+              <MiniStat label="Bowl Wt." value={`${p.diet?.bowlWeight || 100}g`} color="#676354" />
+            </div>
+            <div style={{ padding: '12px 14px', background: '#f8f6f2', borderRadius: 14 }}>
+              <div style={{ fontSize: 12, color: '#9a958c', marginBottom: 6, fontWeight: 600 }}>FEEDING SCHEDULE</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {(p.diet?.schedule || []).map((s, i) => (
+                  <span key={i} style={{ padding: '4px 12px', background: '#e4f2f5', borderRadius: 20, fontSize: 13, fontWeight: 600, color: '#60a1b0' }}>
+                    🕐 {s.time}
+                  </span>
+                ))}
+                {(!p.diet?.schedule || p.diet.schedule.length === 0) && (
+                  <span style={{ fontSize: 13, color: '#9a958c' }}>No schedule set</span>
+                )}
+              </div>
+              <div style={{ marginTop: 10, fontSize: 12, color: '#9a958c' }}>
+                Last fed: <strong style={{ color: '#ca8398' }}>{p.diet?.lastFed || '--:--'}</strong>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Medical */}
+        <Card style={{ animation: 'fadeUp 0.4s ease 0.3s both' }}>
+          <CardHeader icon={<Syringe size={18} />} title="Medical Overview" color="#60a1b0" />
+          <div style={{ padding: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <MedRow icon="💉" label="Next Vaccination" value={formatDate(p.medical?.nextVaccination)} urgent={isUpcoming(p.medical?.nextVaccination)} />
+              <MedRow icon="🩺" label="Last Checkup" value={formatDate(p.medical?.lastCheckup)} />
+              <MedRow icon="✅" label="Vaccination Status" value={p.medical?.vaccinationStatus || 'Unknown'}
+                valueColor={p.medical?.vaccinationStatus === 'Up to Date' ? '#60a1b0' : '#ca8398'} />
+            </div>
+            <div style={{ padding: '12px 14px', background: 'linear-gradient(135deg, #e4f2f5, #d6eef3)', borderRadius: 14 }}>
+              <div style={{ fontSize: 12, color: '#3d7f8f', fontWeight: 700, marginBottom: 4 }}>🏥 Vet Report</div>
+              <div style={{ fontSize: 13, color: '#676354' }}>All records up to date. Next visit recommended in {daysUntil(p.medical?.nextVaccination)} days.</div>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
 };
 
-// Section Component
-const Section = ({ title, icon, children }) => (
-  <div style={styles.section}>
-    <div style={styles.sectionHeader}>
-      {icon}
-      <h2 style={styles.sectionTitle}>{title}</h2>
-    </div>
-    <div style={styles.sectionGrid}>
-      {children}
-    </div>
-  </div>
-);
-
-// Stat Card Component
-const StatCard = ({ icon, label, value, trend, color }) => (
-  <div style={styles.statCard}>
-    <div style={{ ...styles.statIconWrapper, backgroundColor: `${color}15` }}>
-      <div style={{ ...styles.statIcon, color }}>{icon}</div>
-    </div>
-    <div style={styles.statContent}>
-      <div style={styles.statLabel}>{label}</div>
-      <div style={styles.statValue}>{value}</div>
-      {trend && (
-        <div style={styles.statTrend}>
-          {trend.startsWith('+') ? '📈' : '📉'} {trend}
-        </div>
-      )}
-    </div>
-  </div>
-);
-
-// Clock Icon Component
-const ClockIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/>
-    <polyline points="12 6 12 12 16 14"/>
-  </svg>
-);
-
-// Styles
-const styles = {
-  container: {
-    padding: '28px 32px',
-    maxWidth: '1400px',
-    margin: '0 auto',
-    backgroundColor: '#f8f6f4',
-    minHeight: '100%',
-  },
-  welcomeBanner: {
-    background: 'linear-gradient(135deg, #ca8398 0%, #b06d82 100%)',
-    borderRadius: '24px',
-    padding: '24px 32px',
-    marginBottom: '32px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    boxShadow: '0 8px 20px rgba(202, 131, 152, 0.2)',
-  },
-  welcomeTitle: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: 'white',
-    margin: 0,
-    letterSpacing: '-0.3px',
-  },
-  welcomeSubtitle: {
-    fontSize: '14px',
-    color: 'rgba(255,255,255,0.85)',
-    margin: '8px 0 0 0',
-  },
-  dateBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    backdropFilter: 'blur(4px)',
-    padding: '8px 16px',
-    borderRadius: '40px',
-    color: 'white',
-    fontSize: '13px',
-    fontWeight: '500',
-  },
-  grid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '24px',
-  },
-  section: {
-    backgroundColor: 'white',
-    borderRadius: '20px',
-    padding: '20px 24px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-    border: '1px solid #eae8e4',
-  },
-  sectionHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '20px',
-    paddingBottom: '12px',
-    borderBottom: '2px solid #dadbd5',
-  },
-  sectionTitle: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#676354',
-    margin: 0,
-    letterSpacing: '-0.2px',
-  },
-  sectionGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '16px',
-  },
-  statCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    padding: '14px 16px',
-    backgroundColor: '#fefefe',
-    borderRadius: '16px',
-    transition: 'all 0.2s ease',
-    border: '1px solid #f0eeea',
-  },
-  statIconWrapper: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statIcon: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statContent: {
-    flex: 1,
-  },
-  statLabel: {
-    fontSize: '12px',
-    fontWeight: '500',
-    color: '#9a958c',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    marginBottom: '4px',
-  },
-  statValue: {
-    fontSize: '20px',
-    fontWeight: '700',
-    color: '#676354',
-    lineHeight: 1.2,
-  },
-  statTrend: {
-    fontSize: '11px',
-    color: '#60a1b0',
-    marginTop: '4px',
-    fontWeight: '500',
-  },
-  insightCard: {
-    marginTop: '32px',
-    backgroundColor: '#eef4f5',
-    borderRadius: '20px',
-    padding: '20px 28px',
-    display: 'flex',
-    gap: '16px',
-    alignItems: 'flex-start',
-    border: '1px solid #d4e2e5',
-  },
-  insightIcon: {
-    fontSize: '32px',
-  },
-  insightTitle: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#60a1b0',
-    margin: '0 0 6px 0',
-  },
-  insightText: {
-    fontSize: '14px',
-    color: '#5a6e6b',
-    margin: 0,
-    lineHeight: 1.5,
-  },
+/* Helpers */
+const formatDate = (d) => {
+  if (!d || d.includes('Not')) return d || '—';
+  try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+  catch { return d; }
 };
+const isUpcoming = (d) => {
+  if (!d) return false;
+  const diff = new Date(d) - new Date();
+  return diff > 0 && diff < 21 * 86400000;
+};
+const daysUntil = (d) => {
+  if (!d) return '?';
+  const diff = Math.ceil((new Date(d) - new Date()) / 86400000);
+  return diff > 0 ? diff : 0;
+};
+
+const VitalRow = ({ icon, label, value, unit, color, trend }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f8f6f2' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {icon}
+      <span style={{ fontSize: 13, color: '#9a958c' }}>{label}</span>
+    </div>
+    <div style={{ textAlign: 'right' }}>
+      <span style={{ fontSize: 16, fontWeight: 800, color }}>{value}</span>
+      <span style={{ fontSize: 11, color: '#9a958c', marginLeft: 3 }}>{unit}</span>
+      {trend !== undefined && <div style={{ fontSize: 11, color: trend < 0 ? '#ca8398' : '#60a1b0', fontWeight: 600 }}>
+        {trend < 0 ? '↓' : '↑'} {Math.abs(trend)} kg
+      </div>}
+    </div>
+  </div>
+);
+
+const EnvChip = ({ icon, label, value }) => (
+  <div style={{ padding: '8px 10px', background: '#f5f4f0', borderRadius: 10, display: 'flex', gap: 6, alignItems: 'center' }}>
+    <span style={{ fontSize: 14 }}>{icon}</span>
+    <div>
+      <div style={{ fontSize: 10, color: '#9a958c', fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 800, color: '#3a3728' }}>{value}</div>
+    </div>
+  </div>
+);
+
+const MiniStat = ({ label, value, color }) => (
+  <div style={{ background: `${color}12`, borderRadius: 12, padding: '10px', textAlign: 'center' }}>
+    <div style={{ fontSize: 17, fontWeight: 800, color }}>{value}</div>
+    <div style={{ fontSize: 10, color: '#9a958c', marginTop: 2, fontWeight: 600 }}>{label}</div>
+  </div>
+);
+
+const MedRow = ({ icon, label, value, urgent, valueColor }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ fontSize: 16 }}>{icon}</span>
+      <span style={{ fontSize: 13, color: '#9a958c' }}>{label}</span>
+    </div>
+    <span style={{ fontSize: 13, fontWeight: 700, color: valueColor || (urgent ? '#ca8398' : '#676354') }}>
+      {value} {urgent && '⚠️'}
+    </span>
+  </div>
+);
 
 export default Dashboard;
