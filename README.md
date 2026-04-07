@@ -1,70 +1,121 @@
-# Getting Started with Create React App
+# 🐾 Tail Tracker - Smart Pet Health Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+[![React](https://img.shields.io/badge/React-18.2.0-61dafb.svg)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-## Available Scripts
+**Tail Tracker** is a modern, feature-rich pet healthcare dashboard that helps pet owners monitor their furry friends' health, diet, activity, and medical records - all in one beautiful interface.
 
-In the project directory, you can run:
+## ✨ Features
 
-### `npm start`
+### 🏠 Dashboard
+- Real-time health overview with IoT data simulation
+- Activity, sleep, and vital signs tracking
+- Environmental monitoring (temperature, humidity)
+- AI-powered health insights
+- Beautiful gradient UI with animated stats
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 🍽️ Diet Manager
+- Smart feeding schedule management (CRUD operations)
+- Manual feed controls with IoT simulation
+- Bowl weight tracking
+- Daily food intake calculations
+- Export/import diet configuration as JSON
+- Real-time feeding status updates
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 💊 Health Tracker
+- Complete vaccination and medication logging
+- Upcoming reminders with notification system
+- Health metrics visualization (weight trends, heart rate, activity)
+- Vital signs monitoring
+- Medical history with filtering (upcoming/completed/vaccinations)
+- Add/delete medical records
 
-### `npm test`
+### 👤 Pet Profiles
+- Multi-pet support with profile switching
+- Pet bio and health information
+- Weight tracking with trends
+- Activity level indicators
+- Quick stats overview (heart rate, activity, sleep)
+- Remove and add new pets
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 🔐 Authentication
+- Secure login/signup system
+- Demo credentials provided
+- Persistent sessions with localStorage
+- Protected routes
 
-### `npm run build`
+### 🎨 UI/UX
+- Collapsible sidebar navigation
+- Responsive mobile-friendly design
+- Smooth animations (wiggle, heartbeat, slideIn)
+- Custom color palette (#ca8398, #dadbd5, #676354, #60a1b0)
+- Modern gradient backgrounds
+- Toast notifications for user actions
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🚀 Tech Stack
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **Frontend**: React 18.2.0
+- **Icons**: Lucide React
+- **State Management**: React Context API
+- **Styling**: Inline styles with CSS-in-JS
+- **Persistence**: localStorage
+- **Animations**: Custom CSS keyframes
+- **Routing**: Custom state-based routing (no external deps)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 📁 Project Structure
+```tail-tracker/
+├── public/
+│ ├── index.html
+│ ├── logo.png
+│ └── logo32.png
+├── src/
+│ ├── App.js 
+│ ├── index.js
+│ ├── context/
+│ │ └── PetContext.js 
+│ ├── components/
+│ │ ├── Login.js 
+│ │ ├── Layout.js 
+│ │ └── ui.js 
+│ ├── pages/
+│ │ ├── Dashboard.js 
+│ │ ├── DietManager.js 
+│ │ ├── Health.js 
+│ │ └── PetProfile.js
+│ └── styles/
+│ └── theme.css
+├── package.json
+└── README.md
+```
 
-### `npm run eject`
+## 🛠️ Installation
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Setup Instructions
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```cd tail-tracker
+cd tail-tracker
+npm install
+npm start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 🧪 Future Enhancements
 
-## Learn More
+- Backend integration with Node.js/Express
+- Real IoT device connectivity
+- Push notifications for reminders
+- Data export (PDF/CSV)
+- Multi-vet support
+- Prescription management
+- Photo gallery for pets
+- Medication refill reminders
+- Activity tracking with GPS
+- Social sharing for pet achievements
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### 📄 License
+This project is released for educational and research purposes.
