@@ -23,7 +23,7 @@ const DEFAULT_PETS = [
   },
   {
     id: 2, name: "Luna", breed: "Indie", age: 2, weight: "15kg",
-  img: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=150&h=150&fit=crop",
+    img: "https://placedog.net/150/150?id=12",
     color: "#60a1b0",
     bio: "Playful street dog with a heart of gold.",
     diet: {
