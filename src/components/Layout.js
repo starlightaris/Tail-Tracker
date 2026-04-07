@@ -7,9 +7,9 @@ import { PetContext } from '../context/PetContext';
 
 const NAV_ITEMS = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { id: 'diet',      icon: UtensilsCrossed, label: 'Diet Manager' },
-  { id: 'health',    icon: Heart,           label: 'Health Tracker' },
-  { id: 'profile',   icon: User,            label: 'Pet Profiles' },
+  { id: 'diet', icon: UtensilsCrossed, label: 'Diet Manager' },
+  { id: 'health', icon: Heart, label: 'Health Tracker' },
+  { id: 'profile', icon: User, label: 'Pet Profiles' },
 ];
 
 const Layout = ({ children, onLogout, currentPage, navigateTo }) => {
@@ -37,11 +37,22 @@ const Layout = ({ children, onLogout, currentPage, navigateTo }) => {
           borderBottom: '1px solid #eae8e2', minHeight: 68,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
-            <PawPrint size={26} color="#ca8398" style={{ flexShrink: 0, animation: 'heartbeat 3s ease-in-out infinite' }} />
-            {!collapsed && <span style={{
-              fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600,
-              color: '#ca8398', whiteSpace: 'nowrap', animation: 'slideIn 0.25s ease',
-            }}>Tail Tracker</span>}
+            <img
+              src="/logo32.png"
+              alt="Tail Tracker Logo"
+              style={{
+                width: collapsed ? 16 : 32,
+                height: collapsed ? 16 : 32,
+                objectFit: 'contain',
+                flexShrink: 0,
+                /*animation: 'heartbeat 3s ease-in-out infinite',*/
+                borderRadius: 8,
+              }}
+              />
+              {!collapsed && <span style={{
+                fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600,
+                color: '#ca8398', whiteSpace: 'nowrap', animation: 'slideIn 0.25s ease',
+              }}>Tail Tracker</span>}
           </div>
           <button onClick={() => setCollapsed(!collapsed)} style={{
             background: '#f8f6f2', border: '1px solid #eae8e2', borderRadius: 10,

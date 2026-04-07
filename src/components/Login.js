@@ -48,7 +48,16 @@ const Login = ({ onLogin }) => {
       <div style={S.card}>
         <div style={S.logoWrap}>
           <div style={S.logoIcon}>
-            <PawPrint size={36} color="#ca8398" style={{ animation: 'wiggle 2s ease-in-out infinite' }} />
+            <img
+              src="/logo512.png"
+              alt="Tail Tracker Logo"
+              style={{
+                width: 72,
+                height: 72,
+                objectFit: 'contain',
+                animation: 'wiggle 2s ease-in-out infinite',
+              }}
+            />
           </div>
           <h1 style={S.logoText}>Tail Tracker</h1>
           <p style={S.tagline}>Smart Care for Happy Tails 🐾</p>
