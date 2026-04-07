@@ -1,4 +1,4 @@
-# 🐾 Tail Tracker - Smart Pet Health Dashboard
+# 🐾 Tail Tracker - Smart Pet Health Care App
 
 [![React](https://img.shields.io/badge/React-18.2.0-61dafb.svg)](https://reactjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
