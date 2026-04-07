@@ -1,6 +1,6 @@
 // PetProfile.js
 import React, { useContext, useState } from 'react';
-import { PetContext } from '../context/PetContext';
+import { PetContext } from '../../context/PetContext';
 import { 
   PawPrint, Cake, Ruler, Heart, Syringe, Activity, 
   MapPin, Moon, Plus, X, Edit2, Save, Trash2,

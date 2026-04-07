@@ -6,7 +6,7 @@ import {
   Bell, Settings
 } from 'lucide-react';
 import PetSelector from './PetSelector';
-import { PetContext } from '../context/PetContext';
+import { PetContext } from '../../context/PetContext';
 
 const Layout = ({ children, onLogout, currentPage, navigateTo }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);

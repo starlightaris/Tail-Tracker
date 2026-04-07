@@ -1,12 +1,12 @@
 // App.js
 import React, { useState, useEffect } from 'react';
 import { PetProvider } from './context/PetContext';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import PetProfile from './pages/PetProfile';
-import DietManager from './pages/DietManager';
-import Health from './pages/Health';
-import Login from './components/Login';
+import Layout from './CRUD/components/Layout';
+import Dashboard from './CRUD/pages/Dashboard';
+import PetProfile from './CRUD/pages/PetProfile';
+import DietManager from './CRUD/pages/DietManager';
+import Health from './CRUD/pages/Health';
+import Login from './CRUD/components/Login';
 
 // Simple router implementation without react-router-dom
 const App = () => {
