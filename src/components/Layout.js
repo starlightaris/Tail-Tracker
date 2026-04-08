@@ -12,13 +12,54 @@ const NAV_ITEMS = [
   { id: 'profile', icon: User, label: 'Pet Profiles' },
 ];
 
+const SAMPLE_NOTIFICATIONS = [
+  { id: 1, petName: "Charlie", type: "medical", title: "Medical Checkup Due", message: "Charlie's annual checkup is scheduled for today! 🏥", time: "2 hours ago", read: false, icon: "🏥" },
+  { id: 2, petName: "Luna", type: "feeding", title: "Feeding Complete", message: "Luna was fed at 08:30 AM. She finished all her food! 🍖", time: "4 hours ago", read: false, icon: "🍖" },
+  { id: 3, petName: "Buddy", type: "vaccination", title: "Vaccination Reminder", message: "Buddy's rabies vaccination is due in 3 days! 💉", time: "1 day ago", read: true, icon: "💉" },
+  { id: 4, petName: "All Pets", type: "environment", title: "Room Temperature Alert", message: "Temperature dropped to 20°C. Consider adjusting heating for pets! 🌡️", time: "1 day ago", read: true, icon: "🌡️" },
+  { id: 5, petName: "Luna", type: "activity", title: "High Activity Detected", message: "Luna has been extra playful today! +45% more steps than usual ⚡", time: "2 days ago", read: true, icon: "⚡" },
+];
+
 const Layout = ({ children, onLogout, currentPage, navigateTo }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifications, setNotifications] = useState(SAMPLE_NOTIFICATIONS);
   const { selectedPet, allPets, setSelectedPet } = useContext(PetContext);
   const user = JSON.parse(localStorage.getItem('tt_user') || '{}');
 
   const sideW = collapsed ? 72 : 248;
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAsRead = (id) => {
+    setNotifications(prev => prev.map(n =>
+      n.id === id ? { ...n, read: true } : n
+    ));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'medical': return <AlertCircle size={16} color="#ca8398" />;
+      case 'feeding': return <Coffee size={16} color="#60a1b0" />;
+      case 'vaccination': return <AlertCircle size={16} color="#ca8398" />;
+      default: return <CheckCircle size={16} color="#60a1b0" />;
+    }
+  };
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showNotifications && !e.target.closest('.notifications-container')) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showNotifications]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f6f2' }}>
@@ -29,6 +70,8 @@ const Layout = ({ children, onLogout, currentPage, navigateTo }) => {
         position: 'fixed', height: '100vh', zIndex: 200,
         transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)',
         boxShadow: '2px 0 16px rgba(103,99,84,0.06)',
+        overflow: 'hidden',
+
       }}>
         {/* Logo */}
         <div style={{
@@ -36,52 +79,56 @@ const Layout = ({ children, onLogout, currentPage, navigateTo }) => {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           borderBottom: '1px solid #eae8e2', minHeight: 68,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
-            <img
-              src="/logo32.png"
-              alt="Tail Tracker Logo"
-              style={{
-                width: collapsed ? 16 : 32,
-                height: collapsed ? 16 : 32,
-                objectFit: 'contain',
-                flexShrink: 0,
-                /*animation: 'heartbeat 3s ease-in-out infinite',*/
-                borderRadius: 8,
-              }}
+          {!collapsed && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
+              <img
+                src="/logo32.png"
+                alt="Tail Tracker Logo"
+                style={{
+                  width: collapsed ? 16 : 32,
+                  height: collapsed ? 16 : 32,
+                  objectFit: 'contain',
+                  flexShrink: 0,
+                  /*animation: 'heartbeat 3s ease-in-out infinite',*/
+                  borderRadius: 8,
+                }}
               />
-              {!collapsed && <span style={{
+              <span style={{
                 fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600,
                 color: '#ca8398', whiteSpace: 'nowrap', animation: 'slideIn 0.25s ease',
-              }}>Tail Tracker</span>}
-          </div>
+              }}>Tail Tracker</span>
+            </div>
+          )}
           <button onClick={() => setCollapsed(!collapsed)} style={{
             background: '#f8f6f2', border: '1px solid #eae8e2', borderRadius: 10,
             width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: '#9a958c', transition: 'all 0.2s', flexShrink: 0,
+            cursor: 'pointer', color: '#9a958c', transition: 'all 0.2s', flexShrink: 0, marginLeft: collapsed ? 'auto' : 0,
           }}>
             <ChevronLeft size={16} style={{ transform: collapsed ? 'rotate(180deg)' : '', transition: 'transform 0.3s' }} />
           </button>
         </div>
 
         {/* User */}
-        <div style={{
-          padding: collapsed ? '14px' : '14px 20px',
-          borderBottom: '1px solid #eae8e2', display: 'flex', alignItems: 'center', gap: 10,
-        }}>
+        {!collapsed && (
           <div style={{
-            width: 36, height: 36, borderRadius: 18, background: 'linear-gradient(135deg, #ca8398, #b06d82)',
-            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 800, fontSize: 15, flexShrink: 0, fontFamily: "'Nunito', sans-serif",
+            padding: collapsed ? '14px' : '14px 20px',
+            borderBottom: '1px solid #eae8e2', display: 'flex', alignItems: 'center', gap: 10,
+            animation: 'slideIn 0.25s ease',
           }}>
-            {(user.name?.[0] || 'U').toUpperCase()}
-          </div>
-          {!collapsed && (
-            <div style={{ overflow: 'hidden', animation: 'slideIn 0.25s ease' }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 18, background: 'linear-gradient(135deg, #ca8398, #b06d82)',
+              color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 800, fontSize: 15, flexShrink: 0, fontFamily: "'Nunito', sans-serif",
+            }}>
+              {(user.name?.[0] || 'U').toUpperCase()}
+            </div>
+
+            <div style={{ overflow: 'hidden' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#3a3728', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name || 'User'}</div>
               <div style={{ fontSize: 11, color: '#9a958c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email || 'user@example.com'}</div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Pet Switcher */}
         {!collapsed && (
